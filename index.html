@@ -65,6 +65,33 @@
         .then(() => console.log('Service Worker registered'))
         .catch(err => console.error('Service Worker registration failed:', err));
     }
+    let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); // Stop the default mini-infobar
+  deferredPrompt = e;
+
+  // Show a custom "Install" button
+  const installBtn = document.createElement("button");
+  installBtn.textContent = "📲 Install App";
+  installBtn.style = "margin-top: 10px; padding: 10px;";
+  document.body.appendChild(installBtn);
+
+  installBtn.addEventListener('click', () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(choiceResult => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        deferredPrompt = null;
+      });
+    }
+  });
+});
+
 
     function requestNotificationPermission() {
       if ('Notification' in window) {
@@ -77,10 +104,11 @@
     }
 
     function sendNotification(title, body) {
-      if (Notification.permission === 'granted') {
-        new Notification(title, { body });
-      }
-    }
+  if (Notification.permission === 'granted' && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ title, body });
+  }
+}
+
 
     function showReminder(message) {
       const log = document.getElementById('reminder-log');
