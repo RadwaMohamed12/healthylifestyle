@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Reminder & Period Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1rem;
+      background: #f0f8ff;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    .reminder {
+      color: green;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Health Tracker</h1>
+
+  <div class="section">
+    <h2>Reminders</h2>
+    <p>💧 Hydration: Every 1 hour</p>
+    <p>🏋️ Workout: Every 4 hours</p>
+    <p>🚶‍♀️ Walk: Every 2 hours</p>
+    <button onclick="requestNotificationPermission()">Enable Notifications</button>
+    <div id="reminder-log" class="reminder"></div>
+  </div>
+
+  <div class="section">
+    <h2>Period Tracker</h2>
+    <input type="date" id="lastPeriod" placeholder="Last Period Start Date">
+    <input type="number" id="cycleLength" value="28" placeholder="Cycle Length (days)">
+    <button onclick="savePeriod()">Save</button>
+    <button onclick="predictNextPeriod()">Predict Next Period</button>
+    <div id="period-result"></div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('Service Worker registered'))
+        .catch(err => console.error('Service Worker registration failed:', err));
+    }
+
+    function requestNotificationPermission() {
+      if ('Notification' in window) {
+        Notification.requestPermission().then(permission => {
+          alert('Notification permission: ' + permission);
+        });
+      } else {
+        alert("Your browser does not support notifications.");
+      }
+    }
+
+    function sendNotification(title, body) {
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body });
+      }
+    }
+
+    function showReminder(message) {
+      const log = document.getElementById('reminder-log');
+      const time = new Date().toLocaleTimeString();
+      log.innerHTML += `<div>[${time}] ${message}</div>`;
+      sendNotification("Reminder", message);
+    }
+
+    setInterval(() => showReminder("Time to drink water 💧"), 60 * 60 * 1000);
+    setInterval(() => showReminder("Time to workout 🏋️"), 4 * 60 * 60 * 1000);
+    setInterval(() => showReminder("Time to walk 🚶‍♀️"), 2 * 60 * 60 * 1000);
+
+    function savePeriod() {
+      const date = document.getElementById("lastPeriod").value;
+      const cycle = parseInt(document.getElementById("cycleLength").value, 10);
+      if (date && cycle > 0) {
+        localStorage.setItem("lastPeriod", date);
+        localStorage.setItem("cycleLength", cycle);
+        alert("Period data saved!");
+      } else {
+        alert("Please enter a valid date and cycle length.");
+      }
+    }
+
+    function predictNextPeriod() {
+      const dateStr = localStorage.getItem("lastPeriod");
+      const cycle = parseInt(localStorage.getItem("cycleLength"), 10);
+      const resultDiv = document.getElementById("period-result");
+
+      if (dateStr && cycle > 0) {
+        const lastDate = new Date(dateStr);
+        const nextDate = new Date(lastDate);
+        nextDate.setDate(lastDate.getDate() + cycle);
+
+        resultDiv.innerHTML = `<strong>Next period:</strong> ${nextDate.toDateString()}`;
+        sendNotification("Period Tracker", "Next period: " + nextDate.toDateString());
+      } else {
+        resultDiv.innerHTML = "Please save your last period and cycle length first.";
+      }
+    }
+  </script>
+</body>
+</html>
