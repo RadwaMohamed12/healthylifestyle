@@ -117,7 +117,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
       sendNotification("Reminder", message);
     }
 
-    setInterval(() => showReminder("Time to drink water 💧"), 60 * 60 * 1000);
+    setInterval(() => showReminder("Time to drink water 💧"), 60000);
     setInterval(() => showReminder("Time to workout 🏋️"), 4 * 60 * 60 * 1000);
     setInterval(() => showReminder("Time to walk 🚶‍♀️"), 2 * 60 * 60 * 1000);
 
